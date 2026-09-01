@@ -52,6 +52,10 @@ docker compose --profile geode up -d
 4. Set your GDPS URL in the Geometry Dash client you control.
 5. Open `/dashboard/` to finish dashboard installation and configure server settings.
 
+## Docker image
+
+The included Dockerfile builds this PulseGDPS checkout and contains both `pdo_mysql` and `pdo_pgsql`. It has a database-backed `GET /health.php` endpoint for container and load-balancer health checks. Do not put real credentials in a public commit: use the two committed config files only as templates, then create ignored `config/mysql_connection.local.php` or `config/postgresql_connection.local.php` files for local secrets before deployment.
+
 ## Updating
 
 1) Upload the files on a webserver

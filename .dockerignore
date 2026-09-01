@@ -1,0 +1,8 @@
+.git
+.gitignore
+.DS_Store
+Thumbs.db
+data/levels/
+music/
+sfx/
+config/*_connection.local.php
