@@ -1,9 +1,16 @@
-## This version of core is deprecated
-### [Repository with new GDPS core](https://github.com/MegaSa1nt/GMDprivateServer/tree/new)
+# PulseGDPS — MySQL + PostgreSQL
 
-# MegaSa1nt GDPS — MySQL + PostgreSQL
-## Geometry Dash Private Server
-Basically a Geometry Dash Server Emulator
+PulseGDPS is a self-hosted Geometry Dash private-server stack based on the MegaSa1nt core. It includes selectable MySQL/MariaDB or PostgreSQL PDO connections, an optional self-hosted Globed multiplayer stack, and an optional Geode mod index with persistent mod-file storage.
+
+## Included services
+
+| Service | What it does | Start command |
+| --- | --- | --- |
+| GDPS core | Game endpoints and web dashboard | Deploy this PHP project to your web server |
+| MySQL / MariaDB | Default GDPS database backend | `docker compose --profile mysql up -d` |
+| PostgreSQL | Alternate GDPS PDO backend | `docker compose --profile postgres up -d` |
+| Globed | Real-time multiplayer central and game servers | `docker compose --profile globed up -d` |
+| Geode Index | Private mod index, uploads, and downloads | `docker compose --profile geode up -d` |
 
 Supported version of Geometry Dash: 1.0 - 2.208
 
@@ -11,21 +18,42 @@ Supported version of Geometry Dash: 1.0 - 2.208
 
 Required version of PHP: 7.0+ (tested up to 8.3)
 
-### Database configuration
+## Database configuration — no `.env` file
 
-The core accepts MySQL/MariaDB or PostgreSQL PDO connections via environment variables. Copy `.env.example` into your deployment secret store and set `GDPS_DB_DRIVER` to `mysql` or `pgsql`; PHP needs `pdo_mysql` or `pdo_pgsql` respectively. Use `docker compose --profile mysql up -d` or `docker compose --profile postgres up -d` for local database containers.
+Credentials are stored in PHP config files, not an `.env` file:
 
-### Built-in companion services
+1. Edit [config/mysql_connection.php](config/mysql_connection.php) for MySQL/MariaDB, or [config/postgresql_connection.php](config/postgresql_connection.php) for PostgreSQL.
+2. Open [config/connection.php](config/connection.php) and set `$dbDriver` to `mysql` or `pgsql`.
+3. Ensure the matching PHP extension is enabled: `pdo_mysql` or `pdo_pgsql`.
 
-- **Globed multiplayer:** `docker compose --profile globed up -d`; see [docs/globed.md](docs/globed.md).
-- **Geode mod index/storage:** `docker compose --profile geode up -d`; see [docs/geode.md](docs/geode.md). Uploaded `.geode` packages are kept in a persistent Docker volume.
+The supplied `database.sql` is the upstream MySQL/MariaDB schema. PostgreSQL connections are supported by the core’s PDO configuration, but a PostgreSQL-ready schema and review of legacy MySQL-specific queries are required before using PostgreSQL in production.
 
-### Setup
-1) Upload the files on a webserver
-2) Import database.sql into a MySQL/MariaDB database
-3) Edit the links in GeometryDash.exe (some are base64 encoded since 2.1, remember that)
+## Globed multiplayer
 
-#### Updating the server
+PulseGDPS includes the official Globed central-server and game-server images. Start the central server once to generate configuration, configure it to use your public GDPS API URL, then configure the game server with the generated password. Full setup and port requirements are in [docs/globed.md](docs/globed.md).
+
+```bash
+docker compose --profile globed up -d
+```
+
+## Geode mod index and storage
+
+The Geode profile runs the official Geode Index API, PostgreSQL 17, and nginx. Mods uploaded to the index are persisted in a Docker volume and served through `/storage/`; Geode static assets are served through `/static/`. See [docs/geode.md](docs/geode.md) for deployment notes.
+
+```bash
+docker compose --profile geode up -d
+```
+
+## Basic setup
+
+1. Deploy the project through PHP-FPM/nginx or another PHP-capable web server.
+2. Choose a database backend and edit its config file as described above.
+3. Create and import a schema. For MySQL/MariaDB, import `database.sql`.
+4. Set your GDPS URL in the Geometry Dash client you control.
+5. Open `/dashboard/` to finish dashboard installation and configure server settings.
+
+## Updating
+
 1) Upload the files on a webserver
 2) Set `$installed` to false in config/dashboard.php
 3) Run main dashboard's page
