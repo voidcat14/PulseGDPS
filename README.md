@@ -15,6 +15,11 @@ Required version of PHP: 7.0+ (tested up to 8.3)
 
 The core accepts MySQL/MariaDB or PostgreSQL PDO connections via environment variables. Copy `.env.example` into your deployment secret store and set `GDPS_DB_DRIVER` to `mysql` or `pgsql`; PHP needs `pdo_mysql` or `pdo_pgsql` respectively. Use `docker compose --profile mysql up -d` or `docker compose --profile postgres up -d` for local database containers.
 
+### Built-in companion services
+
+- **Globed multiplayer:** `docker compose --profile globed up -d`; see [docs/globed.md](docs/globed.md).
+- **Geode mod index/storage:** `docker compose --profile geode up -d`; see [docs/geode.md](docs/geode.md). Uploaded `.geode` packages are kept in a persistent Docker volume.
+
 ### Setup
 1) Upload the files on a webserver
 2) Import database.sql into a MySQL/MariaDB database

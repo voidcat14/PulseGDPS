@@ -18,6 +18,71 @@ services:
       POSTGRES_PASSWORD: change-me
     ports: ["5432:5432"]
     volumes: ["postgres-data:/var/lib/postgresql/data"]
+
+  # Official Geode Index API. It accepts mod metadata/uploads and stores them
+  # in the persistent geode-storage volume.
+  geode-index:
+    image: ghcr.io/geode-sdk/server:latest-alpine
+    profiles: [geode]
+    environment:
+      DATABASE_URL: postgres://geode:${GEODE_DB_PASSWORD:?set GEODE_DB_PASSWORD}@geode-postgres/geode
+      PORT: 8080
+      APP_URL: ${GEODE_APP_URL:-http://localhost:3000}
+      FRONT_URL: ${GEODE_FRONT_URL:-http://localhost:3000}
+      MAX_MOD_FILESIZE_MB: ${GEODE_MAX_MOD_FILESIZE_MB:-250}
+    depends_on:
+      geode-postgres:
+        condition: service_healthy
+    volumes: ["geode-storage:/app/storage"]
+
+  geode-postgres:
+    image: postgres:17-alpine
+    profiles: [geode]
+    environment:
+      POSTGRES_DB: geode
+      POSTGRES_USER: geode
+      POSTGRES_PASSWORD: ${GEODE_DB_PASSWORD:?set GEODE_DB_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U geode -d geode"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes: ["geode-postgres-data:/var/lib/postgresql/data"]
+
+  # Serves Geode's static assets and uploaded .geode packages while proxying
+  # API traffic to the official index server.
+  geode-web:
+    image: nginx:1.27-alpine
+    profiles: [geode]
+    depends_on: [geode-index]
+    ports: ["${GEODE_PORT:-3000}:80"]
+    volumes:
+      - geode-storage:/app/storage:ro
+      - ./services/geode/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+
+  # Official Globed v2 central service. Start it once to generate /data/config,
+  # then follow docs/globed.md to set its GDPS URL and game-server password.
+  globed-central:
+    image: ghcr.io/globedgd/central-server:latest
+    profiles: [globed]
+    ports:
+      - "${GLOBED_CENTRAL_PORT:-4340}:4340/tcp"
+      - "${GLOBED_CENTRAL_PORT:-4340}:4340/udp"
+      - "${GLOBED_GAME_CONTROL_PORT:-4342}:4342/tcp"
+    volumes: ["globed-central-data:/data"]
+
+  globed-game:
+    image: ghcr.io/globedgd/game-server:latest
+    profiles: [globed]
+    depends_on: [globed-central]
+    ports:
+      - "${GLOBED_GAME_PORT:-4349}:4349/tcp"
+      - "${GLOBED_GAME_PORT:-4349}:4349/udp"
+    volumes: ["globed-game-data:/data"]
 volumes:
   mysql-data:
   postgres-data:
+  geode-postgres-data:
+  geode-storage:
+  globed-central-data:
+  globed-game-data:
