@@ -1,3 +1,5 @@
+[![Powered by DartNode](https://dartnode.com/branding/DN-Open-Source-sm.png)](https://dartnode.com "Powered by DartNode - Free VPS for Open Source")
+
 # PulseGDPS — MySQL + PostgreSQL
 
 PulseGDPS is a self-hosted Geometry Dash private-server stack based on the MegaSa1nt core. It includes selectable MySQL/MariaDB or PostgreSQL PDO connections, an optional self-hosted Globed multiplayer stack, and an optional Geode mod index with persistent mod-file storage.
